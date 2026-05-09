@@ -194,13 +194,20 @@
 
         .mermaid-preview {
             flex: 1;
-            min-height: 300px;
-            max-height: 600px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            padding: 15px;
+            min-height: 420px;
+            max-height: none;
+            background:
+                linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+                radial-gradient(circle at 20% 0%, rgba(99, 102, 241, 0.12), transparent 32%),
+                #f8fafc;
+            background-size: 24px 24px, 24px 24px, auto, auto;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 18px;
+            padding: 24px;
             overflow: auto;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 20px 60px rgba(15, 23, 42, 0.12);
+            position: relative;
         }
 
         .mermaid-preview.empty {
@@ -209,6 +216,140 @@
             justify-content: center;
             color: #999;
             font-size: 14px;
+        }
+
+        .preview-header,
+        .swimlane-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .preview-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .preview-title {
+            color: white;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 0.01em;
+        }
+
+        .preview-subtitle {
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 12px;
+        }
+
+        .preview-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            background: rgba(255, 255, 255, 0.14);
+            color: white;
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-size: 13px;
+            font-weight: 650;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
+        }
+
+        .tool-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.24);
+            transform: translateY(-1px);
+        }
+
+        .tool-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .mermaid-status {
+            margin-top: 10px;
+            min-height: 20px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.75);
+        }
+
+        .mermaid-status.ok {
+            color: #bbf7d0;
+        }
+
+        .mermaid-status.error {
+            color: #fecaca;
+            white-space: pre-wrap;
+        }
+
+        .mermaid-diagram-shell {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .mermaid-diagram-shell svg {
+            display: block;
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            max-height: min(62vh, 760px) !important;
+        }
+
+        .mermaid-diagram-shell.fit-width svg {
+            width: 100% !important;
+            max-height: none !important;
+        }
+
+        .mermaid-diagram-shell.is-wide svg {
+            width: 100% !important;
+        }
+
+        .mermaid-diagram-shell.is-tall svg {
+            max-height: min(68vh, 820px) !important;
+        }
+
+        .mermaid-error-card {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 18px;
+            color: #991b1b;
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(127, 29, 29, 0.08);
+        }
+
+        .mermaid-error-title {
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #7f1d1d;
+        }
+
+        .mermaid-error-detail {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
         }
 
         /* 按钮区域 */
@@ -309,14 +450,20 @@
         }
 
         .swimlane-container-wrapper {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
+            background:
+                linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+                #f8fafc;
+            background-size: 24px 24px, 24px 24px, auto;
+            border: 1px solid rgba(148, 163, 184, 0.32);
+            border-radius: 18px;
             padding: 30px;
             overflow-x: auto;
             overflow-y: auto;
             min-height: 400px;
             max-height: 80vh;
             position: relative;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 18px 48px rgba(15, 23, 42, 0.12);
             /* 添加滚动条样式 */
             scrollbar-width: thin;
             scrollbar-color: rgba(168, 85, 247, 0.5) rgba(255, 255, 255, 0.1);
@@ -343,82 +490,83 @@
 
         .swimlane-container {
             display: flex;
-            gap: 0;
+            gap: 12px;
             width: max-content;
             min-width: 100%;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            border-radius: 18px;
             overflow: visible;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.72);
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
+            padding: 14px;
         }
 
         .swimlane {
             display: flex;
             flex-direction: column;
-            border-right: 1px solid #e0e0e0;
-            width: 220px;
-            min-width: 220px;
-            max-width: 220px;
-        }
-
-        .swimlane:last-child {
-            border-right: none;
+            width: 240px;
+            min-width: 240px;
+            max-width: 240px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 16px;
+            overflow: visible;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
         }
 
         .swimlane-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 12px 8px;
+            padding: 14px 10px;
             text-align: center;
-            font-weight: 600;
+            font-weight: 800;
             font-size: 14px;
-            border-bottom: 2px solid #fff;
-            min-height: 50px;
+            letter-spacing: 0.02em;
+            min-height: 58px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.28);
         }
 
         .swimlane-content {
             flex: 1;
-            padding: 12px 8px;
-            background: #f8f9fa;
+            padding: 14px 10px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
             min-height: 100px;
         }
 
         .process-step {
             background: white;
-            border: 1.5px solid #667eea;
-            border-radius: 8px;
-            padding: 10px 8px;
+            border: 1px solid #667eea;
+            border-left-width: 4px;
+            border-radius: 12px;
+            padding: 12px 10px;
             position: relative;
-            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
             transition: all 0.2s ease;
-            margin-bottom: 2px;
         }
 
         .process-step:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
             border-color: #764ba2;
         }
 
         .step-title {
-            font-weight: 600;
+            font-weight: 750;
             font-size: 13px;
-            color: #2d3748;
+            color: #0f172a;
             margin-bottom: 6px;
             line-height: 1.4;
         }
 
         .step-desc {
             font-size: 11px;
-            color: #718096;
+            color: #64748b;
             line-height: 1.5;
             margin-top: 4px;
         }
@@ -772,6 +920,46 @@
         .input-type.active {
             display: block;
         }
+
+        .fullscreen-mode {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            padding: 28px !important;
+            background:
+                linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+                #f8fafc !important;
+            background-size: 24px 24px, 24px 24px, auto !important;
+        }
+
+        @media (max-width: 768px) {
+            .preview-header,
+            .swimlane-toolbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .preview-actions {
+                width: 100%;
+            }
+
+            .tool-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .mermaid-preview {
+                min-height: 360px;
+                padding: 16px;
+            }
+
+            .mermaid-diagram-shell {
+                min-width: 640px;
+                padding: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -794,7 +982,7 @@
                 <div class="step-connector"></div>
                 <div class="step-item" id="step2Indicator">
                     <div class="step-number">2</div>
-                    <div class="step-label">编辑文案</div>
+                    <div class="step-label">格式化内容</div>
                 </div>
                 <div class="step-connector"></div>
                 <div class="step-item" id="step3Indicator">
@@ -828,7 +1016,7 @@
                     <div class="step-navigation">
                         <div class="nav-btn-group">
                             <button class="nav-btn nav-btn-primary" id="step1NextBtn" onclick="goToStep2()" disabled>
-                                下一步：生成文案 →
+                                下一步：泳道图格式化 →
                             </button>
                         </div>
                         <div class="nav-btn-group">
@@ -839,33 +1027,44 @@
                     </div>
                     
                     <div class="preview-panel">
-                        <label>Mermaid预览</label>
+                        <div class="preview-header">
+                            <div class="preview-title-group">
+                                <div class="preview-title">Mermaid 实时预览</div>
+                                <div class="preview-subtitle">支持粘贴 ```mermaid 代码块，自动校验语法并渲染高清图</div>
+                            </div>
+                            <div class="preview-actions">
+                                <button class="tool-btn" id="downloadMermaidPngBtn" onclick="downloadMermaidPNG()" disabled>下载PNG</button>
+                                <button class="tool-btn" id="downloadMermaidSvgBtn" onclick="downloadMermaidSVG()" disabled>下载SVG</button>
+                                <button class="tool-btn" onclick="toggleFullscreen('mermaidPreview')">全屏预览</button>
+                            </div>
+                        </div>
                         <div class="mermaid-preview empty" id="mermaidPreview">
                             输入Mermaid代码后将显示预览
                         </div>
+                        <div class="mermaid-status" id="mermaidStatus"></div>
                     </div>
                 </div>
 
                 <!-- 加载状态 -->
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
-                    <div>AI正在生成Markdown，请稍候...</div>
+                    <div>AI正在整理泳道图格式内容，请稍候...</div>
                 </div>
             </div>
 
-            <!-- 步骤2：编辑文案 -->
+            <!-- 步骤2：编辑泳道图格式内容 -->
             <div class="step-content step-2-content" id="step2Content">
                 <div class="markdown-section">
-                    <label>Markdown内容（可编辑）</label>
+                    <label>泳道图格式内容（可编辑）</label>
                     <div style="margin-bottom: 15px;">
                         <div style="color: rgba(255, 255, 255, 0.95); font-size: 14px; margin-bottom: 12px;">
-                            💡 提示：您可以在此直接输入或编辑Markdown格式的泳道图内容，修改完成后点击"下一步"生成泳道图
+                            💡 提示：这里是泳道图的结构化格式内容，您可以直接编辑部门和步骤，修改完成后点击"下一步"生成泳道图
                         </div>
                     </div>
                     <textarea 
                         id="markdownEditor" 
                         class="markdown-editor" 
-                        placeholder="请直接输入Markdown格式的泳道图内容，或等待AI生成后在此编辑...&#10;&#10;格式示例：&#10;参与部门：部门1 | 部门2 | 部门3&#10;&#10;部门1：&#10;  ├─ 步骤1 (说明)&#10;  └─ 步骤2 (说明)&#10;&#10;部门2：&#10;  ├─ 步骤1 (说明)&#10;  └─ 步骤2 (说明)"
+                        placeholder="请直接输入泳道图格式内容，或等待AI格式化后在此编辑...&#10;&#10;格式示例：&#10;参与部门：部门1 | 部门2 | 部门3&#10;&#10;部门1：&#10;  ├─ 步骤1 (说明)&#10;  └─ 步骤2 (说明)&#10;&#10;部门2：&#10;  ├─ 步骤1 (说明)&#10;  └─ 步骤2 (说明)"
                         oninput="handleMarkdownChange()"
                     ></textarea>
                 </div>
@@ -888,7 +1087,15 @@
             <!-- 步骤3：生成泳道图 -->
             <div class="step-content step-3-content" id="step3Content">
                 <div class="swimlane-section">
-                    <label>泳道图预览</label>
+                    <div class="swimlane-toolbar">
+                        <div class="preview-title-group">
+                            <div class="preview-title">泳道图预览</div>
+                            <div class="preview-subtitle">可横向滚动查看，也可以全屏审阅后导出高清 PNG</div>
+                        </div>
+                        <div class="preview-actions">
+                            <button class="tool-btn" onclick="toggleFullscreen('swimlaneWrapper')">全屏查看</button>
+                        </div>
+                    </div>
                     <div class="swimlane-container-wrapper" id="swimlaneWrapper">
                         <div class="swimlane-container" id="swimlaneContainer">
                             <div style="text-align: center; padding: 100px; color: #999;">
@@ -915,7 +1122,7 @@
                             ← 上一步
                         </button>
                         <button class="nav-btn nav-btn-secondary" onclick="goToStep2()">
-                            ✏️ 返回修改文案
+                            ✏️ 返回修改格式内容
                         </button>
                     </div>
                     <div class="nav-btn-group">
@@ -932,20 +1139,39 @@
         // 初始化Mermaid
         mermaid.initialize({
             startOnLoad: false,
-            theme: 'default',
+            theme: 'base',
+            securityLevel: 'loose',
+            flowchart: {
+                curve: 'basis',
+                htmlLabels: true,
+                padding: 18,
+                nodeSpacing: 48,
+                rankSpacing: 62
+            },
             themeVariables: {
-                primaryColor: '#667eea',
-                primaryTextColor: '#fff',
-                primaryBorderColor: '#5568d3',
-                lineColor: '#667eea',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '14px'
+                background: 'transparent',
+                primaryColor: '#eef2ff',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#6366f1',
+                lineColor: '#6366f1',
+                secondaryColor: '#f0fdfa',
+                tertiaryColor: '#fff7ed',
+                noteBkgColor: '#fef3c7',
+                noteTextColor: '#78350f',
+                noteBorderColor: '#f59e0b',
+                clusterBkg: '#ffffff',
+                clusterBorder: '#cbd5e1',
+                edgeLabelBackground: '#ffffff',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
+                fontSize: '15px'
             }
         });
 
         let currentInputType = 'text';
         let markdownContent = '';
         let currentStep = 1;
+        let mermaidIsValid = false;
+        let latestMermaidSVG = '';
 
         // 步骤切换函数
         function goToStep(step) {
@@ -996,11 +1222,17 @@
             const input = currentInputType === 'text' ? textInput : mermaidInput;
             
             if (!input.trim() && !markdownContent.trim()) {
-                showError('请先输入内容或生成Markdown');
+                showError('请先输入内容或生成泳道图格式内容');
                 return;
             }
 
-            // 如果没有Markdown内容，先生成（convertToMarkdown内部会自动跳转）
+            if (currentInputType === 'mermaid' && !mermaidIsValid) {
+                showError('Mermaid语法仍有错误，请先修正到预览渲染成功后再进行泳道图格式化');
+                previewMermaid();
+                return;
+            }
+
+            // 如果没有泳道图格式内容，先生成（convertToMarkdown内部会自动跳转）
             if (!markdownContent.trim()) {
                 console.log('[DEBUG] goToStep2: 开始生成Markdown...');
                 convertToMarkdown().then(() => {
@@ -1011,7 +1243,7 @@
                     // 生成失败，不切换步骤
                 });
             } else {
-                console.log('[DEBUG] goToStep2: 已有Markdown内容，直接跳转');
+                console.log('[DEBUG] goToStep2: 已有泳道图格式内容，直接跳转');
                 goToStep(2);
             }
         }
@@ -1023,15 +1255,15 @@
             // 如果编辑器为空，添加提示
             const editor = document.getElementById('markdownEditor');
             if (editor && !editor.value.trim()) {
-                editor.placeholder = '请直接输入Markdown格式的泳道图内容，例如：\n\n参与部门：部门1 | 部门2 | 部门3\n\n部门1：\n  ├─ 步骤1 (说明)\n  └─ 步骤2 (说明)\n\n部门2：\n  ├─ 步骤1 (说明)\n  └─ 步骤2 (说明)';
+                editor.placeholder = '请直接输入泳道图格式内容，例如：\n\n参与部门：部门1 | 部门2 | 部门3\n\n部门1：\n  ├─ 步骤1 (说明)\n  └─ 步骤2 (说明)\n\n部门2：\n  ├─ 步骤1 (说明)\n  └─ 步骤2 (说明)';
             }
         }
 
         function goToStep3() {
-            // 检查是否有Markdown内容
+            // 检查是否有泳道图格式内容
             const markdown = document.getElementById('markdownEditor').value;
             if (!markdown.trim()) {
-                showError('请先编辑或生成Markdown内容');
+                showError('请先编辑或生成泳道图格式内容');
                 return;
             }
 
@@ -1081,30 +1313,131 @@
             checkStep1Input();
         }
 
+        function cleanMermaidCode(code) {
+            return (code || '')
+                .replace(/^\s*```(?:mermaid)?\s*/i, '')
+                .replace(/\s*```\s*$/i, '')
+                .trim();
+        }
+
+        function setMermaidDownloadState(enabled) {
+            const pngBtn = document.getElementById('downloadMermaidPngBtn');
+            const svgBtn = document.getElementById('downloadMermaidSvgBtn');
+            if (pngBtn) pngBtn.disabled = !enabled;
+            if (svgBtn) svgBtn.disabled = !enabled;
+        }
+
+        function getReadableMermaidError(error) {
+            const raw = error && (error.str || error.message || String(error));
+            return raw
+                .replace(/^Parse error on line/i, '第')
+                .replace(/Expecting/g, '期望')
+                .replace(/got/g, '实际得到');
+        }
+
+        function escapeHTML(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function tuneMermaidPreviewSize(shell) {
+            if (!shell) return;
+            const svg = shell.querySelector('svg');
+            if (!svg) return;
+
+            const widthAttr = parseFloat(svg.getAttribute('width')) || 0;
+            const heightAttr = parseFloat(svg.getAttribute('height')) || 0;
+            const viewBox = svg.getAttribute('viewBox');
+            let intrinsicWidth = widthAttr;
+            let intrinsicHeight = heightAttr;
+
+            if ((!intrinsicWidth || !intrinsicHeight) && viewBox) {
+                const parts = viewBox.split(/\s+/).map(Number);
+                intrinsicWidth = parts[2] || intrinsicWidth;
+                intrinsicHeight = parts[3] || intrinsicHeight;
+            }
+
+            if (intrinsicWidth && intrinsicHeight && !viewBox) {
+                svg.setAttribute('viewBox', `0 0 ${intrinsicWidth} ${intrinsicHeight}`);
+            }
+
+            svg.removeAttribute('width');
+            svg.removeAttribute('height');
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            shell.classList.remove('is-wide', 'is-tall', 'fit-width');
+            if (!intrinsicWidth || !intrinsicHeight) {
+                shell.classList.add('fit-width');
+                return;
+            }
+
+            const ratio = intrinsicWidth / intrinsicHeight;
+            if (ratio > 1.25) {
+                shell.classList.add('is-wide');
+            } else if (ratio < 0.72) {
+                shell.classList.add('is-tall');
+            } else {
+                shell.classList.add('fit-width');
+            }
+        }
+
         // Mermaid实时预览
-        function previewMermaid() {
-            const mermaidCode = document.getElementById('mermaidInput').value;
+        async function previewMermaid() {
+            const mermaidCode = cleanMermaidCode(document.getElementById('mermaidInput').value);
             const preview = document.getElementById('mermaidPreview');
+            const status = document.getElementById('mermaidStatus');
             
             if (!mermaidCode.trim()) {
                 preview.innerHTML = '<div class="empty">输入Mermaid代码后将显示预览</div>';
                 preview.classList.add('empty');
+                if (status) {
+                    status.textContent = '';
+                    status.className = 'mermaid-status';
+                }
+                mermaidIsValid = false;
+                latestMermaidSVG = '';
+                setMermaidDownloadState(false);
+                checkStep1Input();
                 return;
             }
             
             preview.classList.remove('empty');
-            preview.innerHTML = '';
+            preview.innerHTML = '<div class="empty">正在渲染 Mermaid 图...</div>';
             
             try {
-                mermaid.parse(mermaidCode);
-                const div = document.createElement('div');
-                div.className = 'mermaid';
-                div.textContent = mermaidCode;
-                preview.appendChild(div);
-                mermaid.init(undefined, div);
+                await mermaid.parse(mermaidCode);
+                const renderId = `mermaid-preview-${Date.now()}`;
+                const result = await mermaid.render(renderId, mermaidCode);
+                latestMermaidSVG = result.svg;
+                preview.innerHTML = `<div class="mermaid-diagram-shell">${result.svg}</div>`;
+                tuneMermaidPreviewSize(preview.querySelector('.mermaid-diagram-shell'));
+                if (status) {
+                    status.textContent = '语法检查通过，已生成高清预览。';
+                    status.className = 'mermaid-status ok';
+                }
+                mermaidIsValid = true;
+                setMermaidDownloadState(true);
             } catch (error) {
-                preview.innerHTML = `<div style="color: #f44336; padding: 20px;">Mermaid语法错误：${error.message}</div>`;
+                const readableError = getReadableMermaidError(error);
+                preview.innerHTML = `
+                    <div class="mermaid-error-card">
+                        <div class="mermaid-error-title">Mermaid 语法有误，暂时无法渲染</div>
+                        <div class="mermaid-error-detail">${escapeHTML(readableError)}</div>
+                    </div>
+                `;
+                if (status) {
+                    status.textContent = `语法错误：${readableError}`;
+                    status.className = 'mermaid-status error';
+                }
+                mermaidIsValid = false;
+                latestMermaidSVG = '';
+                setMermaidDownloadState(false);
             }
+            checkStep1Input();
         }
 
         // 检查第一步输入并更新按钮状态
@@ -1115,7 +1448,7 @@
             
             if (step1NextBtn) {
                 // 如果当前是文本输入模式，检查文本输入；如果是Mermaid模式，检查Mermaid输入
-                const hasInput = currentInputType === 'text' ? textInput.length > 0 : mermaidInput.length > 0;
+                const hasInput = currentInputType === 'text' ? textInput.length > 0 : mermaidInput.length > 0 && mermaidIsValid;
                 step1NextBtn.disabled = !hasInput;
             }
         }
@@ -1140,12 +1473,17 @@
         // 转换需求/Mermaid为Markdown
         async function convertToMarkdown() {
             const textInput = document.getElementById('textInput').value;
-            const mermaidInput = document.getElementById('mermaidInput').value;
+            const mermaidInput = cleanMermaidCode(document.getElementById('mermaidInput').value);
             const input = currentInputType === 'text' ? textInput : mermaidInput;
             
             if (!input.trim()) {
                 showError('请输入需求描述或Mermaid代码');
                 return Promise.reject('输入为空');
+            }
+
+            if (currentInputType === 'mermaid' && !mermaidIsValid) {
+                showError('Mermaid语法有误，请先修正预览区提示的错误');
+                return Promise.reject('Mermaid语法错误');
             }
             
             const loading = document.getElementById('loading');
@@ -1228,7 +1566,7 @@
                         editor.value = markdownContent;
                         // 触发input事件以更新按钮状态
                         editor.dispatchEvent(new Event('input'));
-                        console.log('[DEBUG] Markdown内容已写入编辑器，长度:', markdownContent.length);
+                console.log('[DEBUG] 泳道图格式内容已写入编辑器，长度:', markdownContent.length);
                     } else {
                         console.error('[ERROR] 找不到Markdown编辑器元素');
                     }
@@ -1299,7 +1637,7 @@
             }, 5000);
         }
 
-        // Markdown内容变化处理
+        // 泳道图格式内容变化处理
         function handleMarkdownChange() {
             const editor = document.getElementById('markdownEditor');
             const step2NextBtn = document.getElementById('step2NextBtn');
@@ -1316,7 +1654,7 @@
                 step2NextBtn.disabled = !hasContent;
             }
             
-            console.log('[DEBUG] Markdown内容变化，按钮状态:', hasContent ? '启用' : '禁用');
+            console.log('[DEBUG] 泳道图格式内容变化，按钮状态:', hasContent ? '启用' : '禁用');
         }
 
         // 生成泳道图
@@ -1331,12 +1669,12 @@
             }
             
             const markdown = markdownEditor.value;
-            console.log('[DEBUG] Markdown内容长度:', markdown.length);
-            console.log('[DEBUG] Markdown内容预览:', markdown.substring(0, 200));
+            console.log('[DEBUG] 泳道图格式内容长度:', markdown.length);
+            console.log('[DEBUG] 泳道图格式内容预览:', markdown.substring(0, 200));
             
             if (!markdown || !markdown.trim()) {
-                console.warn('[WARN] Markdown内容为空');
-                showError('请先生成或输入Markdown内容');
+                console.warn('[WARN] 泳道图格式内容为空');
+                showError('请先生成或输入泳道图格式内容');
                 return;
             }
             
@@ -1423,7 +1761,7 @@
             console.log('[DEBUG] 最终解析结果:', data);
             
             if (data.departments.length === 0) {
-                throw new Error('无法解析部门信息，请检查Markdown格式');
+                throw new Error('无法解析部门信息，请检查泳道图格式');
             }
             
             return data;
@@ -1529,6 +1867,83 @@
             
             console.log('[DEBUG] 渲染完成，共渲染', data.departments.length, '个部门');
         }
+
+        function downloadFile(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function downloadMermaidSVG() {
+            if (!latestMermaidSVG) {
+                showError('请先输入正确的 Mermaid 代码并完成预览渲染');
+                return;
+            }
+            const blob = new Blob([latestMermaidSVG], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            downloadFile(url, 'mermaid流程图.svg');
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadMermaidPNG() {
+            if (!latestMermaidSVG) {
+                showError('请先输入正确的 Mermaid 代码并完成预览渲染');
+                return;
+            }
+
+            const svgBlob = new Blob([latestMermaidSVG], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const scale = 2;
+                canvas.width = Math.max(img.naturalWidth || 1200, 1200) * scale;
+                canvas.height = Math.max(img.naturalHeight || 800, 800) * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const drawWidth = (img.naturalWidth || 1200) * scale;
+                const drawHeight = (img.naturalHeight || 800) * scale;
+                const x = (canvas.width - drawWidth) / 2;
+                const y = (canvas.height - drawHeight) / 2;
+                ctx.drawImage(img, x, y, drawWidth, drawHeight);
+                URL.revokeObjectURL(url);
+                downloadFile(canvas.toDataURL('image/png', 1), 'mermaid流程图.png');
+            };
+            img.onerror = function() {
+                URL.revokeObjectURL(url);
+                showError('Mermaid PNG 导出失败，请尝试下载 SVG');
+            };
+            img.src = url;
+        }
+
+        function toggleFullscreen(elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            if (!document.fullscreenElement) {
+                el.classList.add('fullscreen-mode');
+                const request = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+                if (request) {
+                    request.call(el).catch(() => {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                } else {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement) {
+                document.querySelectorAll('.fullscreen-mode').forEach(el => el.classList.remove('fullscreen-mode'));
+            }
+        });
 
         // 导出PNG
         function exportPNG() {
@@ -1647,9 +2062,9 @@
             } else {
                 console.log('[DEBUG] Markdown编辑器元素找到，当前内容长度:', markdownEditor.value.length);
                 // 如果已有内容，启用按钮
-                if (markdownEditor.value.trim()) {
+                if (markdownEditor.value.trim() && generateBtn) {
                     generateBtn.disabled = false;
-                    console.log('[DEBUG] 检测到Markdown内容，已启用生成按钮');
+                    console.log('[DEBUG] 检测到泳道图格式内容，已启用生成按钮');
                 }
             }
             
