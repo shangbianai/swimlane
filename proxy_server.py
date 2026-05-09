@@ -37,19 +37,159 @@ def log_error(message):
     except:
         pass
 
-# 尝试加载环境变量（可选）
+# 尝试加载环境变量（可选，作为 config.json 之外的兜底）
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    # 如果dotenv未安装，跳过环境变量加载
     pass
 
-# Doubao-Seed-1.8 API 配置
-API_URL = os.getenv('DOUBAO_API_URL', 'https://ark.cn-beijing.volces.com/api/v3/chat/completions')
-API_KEY = os.getenv('DOUBAO_API_KEY')
-MODEL = os.getenv('DOUBAO_MODEL', 'doubao-seed-1-8-251228')
-BACKUP_API_KEY = os.getenv('DOUBAO_BACKUP_API_KEY')
+# ============================================================
+# 多 Provider 配置体系
+# config.json 优先；不存在时从环境变量初始化；前端可在线修改并持久化
+# ============================================================
+
+CONFIG_FILE = os.getenv(
+    'SWIMLANE_CONFIG_FILE',
+    str(Path(__file__).resolve().parent / 'config.json')
+)
+
+PROVIDERS = {
+    'doubao': {
+        'name': 'Doubao（火山方舟）',
+        'api_url': 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+        'default_model': 'doubao-seed-1-8-251228',
+        'models': [
+            'doubao-seed-1-8-251228',
+            'doubao-pro-256k',
+            'doubao-pro-32k',
+            'doubao-pro-4k',
+            'doubao-lite-32k'
+        ],
+        'docs': 'https://www.volcengine.com/docs/82379'
+    },
+    'deepseek': {
+        'name': 'DeepSeek',
+        'api_url': 'https://api.deepseek.com/v1/chat/completions',
+        'default_model': 'deepseek-chat',
+        'models': [
+            'deepseek-chat',
+            'deepseek-reasoner'
+        ],
+        'docs': 'https://platform.deepseek.com/api_keys'
+    }
+}
+
+# 当前活跃配置（运行时可修改）
+RUNTIME_CONFIG = {
+    'provider': 'doubao',
+    'providers': {
+        p: {'api_key': '', 'model': meta['default_model']}
+        for p, meta in PROVIDERS.items()
+    }
+}
+
+
+def load_config():
+    """优先从 config.json 加载；不存在时尝试从环境变量初始化（向后兼容）。"""
+    cfg = None
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+    except Exception as e:
+        log_error(f"读取 config.json 失败: {e}")
+
+    if cfg and isinstance(cfg, dict):
+        provider = cfg.get('provider')
+        if provider in PROVIDERS:
+            RUNTIME_CONFIG['provider'] = provider
+        for p, info in (cfg.get('providers') or {}).items():
+            if p in RUNTIME_CONFIG['providers'] and isinstance(info, dict):
+                RUNTIME_CONFIG['providers'][p]['api_key'] = info.get('api_key', '') or ''
+                RUNTIME_CONFIG['providers'][p]['model'] = (
+                    info.get('model') or PROVIDERS[p]['default_model']
+                )
+        log_debug(f"已从 config.json 加载配置，当前 provider={RUNTIME_CONFIG['provider']}")
+        return
+
+    # 兜底：从环境变量初始化
+    env_doubao_key = os.getenv('DOUBAO_API_KEY', '')
+    env_doubao_model = os.getenv('DOUBAO_MODEL', '')
+    if env_doubao_key:
+        RUNTIME_CONFIG['providers']['doubao']['api_key'] = env_doubao_key
+    if env_doubao_model:
+        RUNTIME_CONFIG['providers']['doubao']['model'] = env_doubao_model
+
+    env_ds_key = os.getenv('DEEPSEEK_API_KEY', '')
+    env_ds_model = os.getenv('DEEPSEEK_MODEL', '')
+    if env_ds_key:
+        RUNTIME_CONFIG['providers']['deepseek']['api_key'] = env_ds_key
+    if env_ds_model:
+        RUNTIME_CONFIG['providers']['deepseek']['model'] = env_ds_model
+
+
+def save_config():
+    """把 RUNTIME_CONFIG 写入 config.json。"""
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(RUNTIME_CONFIG, f, ensure_ascii=False, indent=2)
+        try:
+            os.chmod(CONFIG_FILE, 0o600)
+        except Exception:
+            pass
+        log_debug("config.json 已保存")
+        return True
+    except Exception as e:
+        log_error(f"保存 config.json 失败: {e}")
+        return False
+
+
+def mask_key(key):
+    if not key:
+        return ''
+    if len(key) <= 8:
+        return '*' * len(key)
+    return f"{key[:4]}{'*' * max(4, len(key) - 8)}{key[-4:]}"
+
+
+def get_public_config():
+    """对外暴露的配置（脱敏）。"""
+    out = {
+        'provider': RUNTIME_CONFIG['provider'],
+        'providers': {}
+    }
+    for p, meta in PROVIDERS.items():
+        rc = RUNTIME_CONFIG['providers'].get(p, {})
+        out['providers'][p] = {
+            'name': meta['name'],
+            'api_url': meta['api_url'],
+            'default_model': meta['default_model'],
+            'models': meta['models'],
+            'docs': meta.get('docs', ''),
+            'has_key': bool(rc.get('api_key')),
+            'key_masked': mask_key(rc.get('api_key', '')),
+            'model': rc.get('model') or meta['default_model']
+        }
+    return out
+
+
+def get_active_credentials():
+    """获取当前 provider 的 (api_url, api_key, model)。"""
+    p = RUNTIME_CONFIG['provider']
+    if p not in PROVIDERS:
+        p = 'doubao'
+    rc = RUNTIME_CONFIG['providers'].get(p, {})
+    return (
+        PROVIDERS[p]['api_url'],
+        rc.get('api_key', ''),
+        rc.get('model') or PROVIDERS[p]['default_model'],
+        p,
+        PROVIDERS[p]['name']
+    )
+
+
+load_config()
 
 class SwimlaneProxyHandler(BaseHTTPRequestHandler):
     """处理泳道图工具的 API 请求"""
@@ -67,105 +207,102 @@ class SwimlaneProxyHandler(BaseHTTPRequestHandler):
         self._send_cors_headers()
         self.end_headers()
     
+    def _read_json_body(self):
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length) if length > 0 else b''
+            return json.loads(body.decode('utf-8')) if body else {}
+        except Exception:
+            return None
+
+    def _send_json(self, status, payload):
+        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self._send_cors_headers()
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_POST(self):
         """处理 POST 请求"""
         try:
-            # 只处理 /api/convert 端点
+            # ---- /api/config: 保存配置 ----
+            if self.path == '/api/config':
+                data = self._read_json_body()
+                if data is None:
+                    return self._send_json(400, {"success": False, "error": "Invalid JSON"})
+                provider = data.get('provider')
+                api_key = data.get('api_key')
+                model = data.get('model')
+                if provider not in PROVIDERS:
+                    return self._send_json(400, {
+                        "success": False,
+                        "error": f"未知 provider: {provider}",
+                        "supported": list(PROVIDERS.keys())
+                    })
+                # 仅当显式提供 api_key（含空字符串）才覆盖；None 表示保留原值
+                if api_key is not None:
+                    RUNTIME_CONFIG['providers'][provider]['api_key'] = (api_key or '').strip()
+                if model:
+                    if model not in PROVIDERS[provider]['models']:
+                        # 允许自定义 model 名（不限制白名单），仅做记录
+                        log_debug(f"使用非预设 model: {provider}/{model}")
+                    RUNTIME_CONFIG['providers'][provider]['model'] = model
+                # 切换为当前 provider
+                if data.get('activate', True):
+                    RUNTIME_CONFIG['provider'] = provider
+                ok = save_config()
+                return self._send_json(200 if ok else 500, {
+                    "success": ok,
+                    "config": get_public_config(),
+                    "message": "配置已保存" if ok else "保存失败，请查看后端日志"
+                })
+
+            # ---- /api/convert: 调用 LLM ----
             if self.path != '/api/convert':
-                self.send_response(404)
-                self._send_cors_headers()
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Not Found"}).encode('utf-8'))
-                return
-            
-            # 读取请求体
-            content_length = int(self.headers.get('Content-Length', 0))
-            body = self.rfile.read(content_length)
-            
-            # 解析 JSON
-            try:
-                data = json.loads(body.decode('utf-8'))
-            except json.JSONDecodeError:
-                self.send_response(400)
-                self._send_cors_headers()
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Invalid JSON"}).encode('utf-8'))
-                return
-            
-            # 获取用户输入（需求文本或Mermaid代码）
+                return self._send_json(404, {"error": "Not Found"})
+
+            data = self._read_json_body()
+            if data is None:
+                return self._send_json(400, {"success": False, "error": "Invalid JSON"})
+
             user_input = data.get('input', '')
-            input_type = data.get('type', 'text')  # 'text' 或 'mermaid'
-            
+            input_type = data.get('type', 'text')
+
             if not user_input:
-                self.send_response(400)
-                self._send_cors_headers()
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Input is required"}).encode('utf-8'))
-                return
-            
-            # 构造提示词
+                return self._send_json(400, {"success": False, "error": "Input is required"})
+
             prompt = self._build_prompt(user_input, input_type)
 
-            if not API_KEY:
-                self.send_response(500)
-                self.send_header('Content-Type', 'application/json; charset=utf-8')
-                self._send_cors_headers()
-                self.end_headers()
-                error_response = {
+            api_url, api_key, model, provider, provider_name = get_active_credentials()
+
+            if not api_key:
+                return self._send_json(500, {
                     "success": False,
-                    "error": "DOUBAO_API_KEY 未配置",
-                    "message": "请在服务器环境变量或 .env 文件中配置 DOUBAO_API_KEY"
-                }
-                self.wfile.write(json.dumps(error_response, ensure_ascii=False).encode('utf-8'))
-                return
-            
-            # 构造API请求
+                    "error": f"{provider_name} API Key 未配置",
+                    "code": "API_KEY_MISSING",
+                    "provider": provider,
+                    "message": "请在前端右上角「设置」中配置 API Key"
+                })
+
             payload = {
-                "model": MODEL,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7,
                 "max_tokens": 4000
             }
-            
-            # 调用 Doubao-Seed-1.8 API
             headers = {
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {API_KEY}'
+                'Authorization': f'Bearer {api_key}'
             }
-            
-            log_debug(f"使用API Key: {API_KEY[:8]}...")
-            log_debug(f"请求URL: {API_URL}")
-            log_debug(f"请求Payload: {json.dumps(payload, ensure_ascii=False)[:200]}...")
-            
+
+            log_debug(f"调用 {provider_name} | model={model} | url={api_url}")
+
             try:
-                log_debug(f"开始调用API，超时时间: 60秒")
-                response = requests.post(
-                    API_URL,
-                    headers=headers,
-                    json=payload,
-                    timeout=60
-                )
-                log_debug(f"API调用完成，状态码: {response.status_code}")
-                
-                log_debug(f"响应状态码: {response.status_code}")
-                
-                if response.status_code == 401 and BACKUP_API_KEY:
-                    # 如果主API Key失败，尝试备用Key
-                    log_debug(f"主API Key失败，尝试备用Key...")
-                    headers['Authorization'] = f'Bearer {BACKUP_API_KEY}'
-                    response = requests.post(
-                        API_URL,
-                        headers=headers,
-                        json=payload,
-                        timeout=60
-                    )
-                    log_debug(f"备用Key响应状态码: {response.status_code}")
-                
+                response = requests.post(api_url, headers=headers, json=payload, timeout=60)
+                log_debug(f"API响应状态码: {response.status_code}")
+
                 if response.status_code != 200:
                     error_detail = response.text[:500] if response.text else "无详细信息"
                     raise Exception(f"API返回错误 {response.status_code}: {error_detail}")
@@ -263,78 +400,78 @@ class SwimlaneProxyHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(error_response, ensure_ascii=False).encode('utf-8'))
     
     def _build_prompt(self, user_input, input_type):
-        """构造AI提示词"""
-        if input_type == 'mermaid':
-            prompt = f"""你是一个专业的业务流程分析专家。请将以下Mermaid流程图转换为指定格式的Markdown：
+        """构造AI提示词（支持步骤ID和跨泳道关系）。"""
+        format_spec = """格式要求（严格按此输出，仅输出 Markdown，不要任何解释）：
 
-Mermaid代码：
+参与部门：部门A | 部门B | 部门C
+
+部门A：
+  ├─ A1 步骤标题 (一句话说明)
+  ├─ A2 步骤标题 (说明)
+  └─ A3 步骤标题 (说明)
+
+部门B：
+  ├─ B1 步骤标题 (说明)
+  └─ B2 步骤标题 (说明)
+
+部门C：
+  └─ C1 步骤标题 (说明)
+
+跨泳道关系：
+  A2 → B1
+  B1 → C1
+  C1 → B2
+  B2 → A3
+
+写作规则：
+1. 第一行用「参与部门：」开头，部门用「 | 」分隔，按参与流程的左→右顺序排列。
+2. 每个部门以「部门名：」单独成行，下面用「  ├─ 」「  └─ 」列出该泳道内的步骤。
+3. 每个步骤必须有一个简短编号 ID，放在标题最前面：建议用「部门首字母 + 顺序数字」，如 A1、A2、B1、B2、C1。同一编号在全文唯一。
+4. 步骤标题简洁（不超过 12 字），括号里的说明可选，写一句话补充。
+5. 末尾单独加一段「跨泳道关系：」，用「 → 」连接产生交接的两个步骤 ID（一行一条或一行多个均可，例如 `A2 → B1 → C1`）。
+   - 只在跨部门交接（不同泳道之间）时添加；同部门内的顺序由 ├─/└─ 自然表达，不需要重复写。
+   - 至少给出主流程的关键交接关系；如果有反向回流（例如审核退回）也用 → 表示流向。
+6. 不要输出多余的空段落、注释或代码块包裹。"""
+
+        if input_type == 'mermaid':
+            prompt = f"""你是一个资深的业务流程分析专家，擅长把流程图翻译成可读性强的泳道结构。请将以下 Mermaid 流程图转写成下面规定的 Markdown：
+
+Mermaid 代码：
 ```mermaid
 {user_input}
 ```
 
-请严格按照以下格式输出Markdown：
-
-格式要求：
-参与部门：部门1 | 部门2 | 部门3
-
-部门1：
-  ├─ 步骤1 (说明)
-  └─ 步骤2 (说明)
-
-部门2：
-  ├─ 步骤1 (说明)
-  └─ 步骤2 (说明)
-
-请确保：
-1. 第一行列出所有参与部门，用"|"分隔
-2. 每个部门的步骤使用树状结构（├─ 和 └─）
-3. 步骤说明用括号标注
-4. 保持逻辑清晰，步骤顺序合理
-5. 只输出Markdown内容，不要添加其他说明文字"""
+{format_spec}"""
         else:
-            prompt = f"""你是一个专业的业务流程分析专家。请根据以下需求描述，生成指定格式的Markdown泳道图：
+            prompt = f"""你是一个资深的业务流程分析专家，擅长根据业务描述设计跨部门的泳道流程。请根据以下需求生成指定格式的 Markdown 泳道图：
 
 需求描述：
 {user_input}
 
-请严格按照以下格式输出Markdown：
+{format_spec}"""
 
-格式要求：
-参与部门：部门1 | 部门2 | 部门3
-
-部门1：
-  ├─ 步骤1 (说明)
-  └─ 步骤2 (说明)
-
-部门2：
-  ├─ 步骤1 (说明)
-  └─ 步骤2 (说明)
-
-请确保：
-1. 第一行列出所有参与部门，用"|"分隔
-2. 每个部门的步骤使用树状结构（├─ 和 └─）
-3. 步骤说明用括号标注
-4. 保持逻辑清晰，步骤顺序合理
-5. 只输出Markdown内容，不要添加其他说明文字"""
-        
         return prompt
     
     def do_GET(self):
-        # 处理 GET 请求：健康检查 + 静态前端页面
+        # 处理 GET 请求：健康检查 + 配置 + 静态前端页面
         parsed_path = urlparse(self.path).path
+
         if parsed_path == '/api/health':
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
-            self._send_cors_headers()
-            self.end_headers()
-            response = {
+            api_url, api_key, model, provider, provider_name = get_active_credentials()
+            return self._send_json(200, {
                 "status": "ok",
                 "service": "swimlane-tool",
-                "api_url": API_URL,
-                "model": MODEL
-            }
-            self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
-            return
+                "provider": provider,
+                "provider_name": provider_name,
+                "model": model,
+                "has_key": bool(api_key)
+            })
+
+        if parsed_path == '/api/config':
+            return self._send_json(200, {
+                "success": True,
+                "config": get_public_config()
+            })
 
         if parsed_path in ('/', '/index.html'):
             file_path = Path(__file__).resolve().parent / 'index.html'
@@ -379,14 +516,16 @@ def run_server(port=8222):
     """启动代理服务器"""
     server_address = ('', port)
     httpd = HTTPServer(server_address, SwimlaneProxyHandler)
+    api_url, api_key, model, provider, provider_name = get_active_credentials()
     print(f"=" * 60)
-    print(f"泳道图智能设计工具 - AI代理服务器已启动")
+    print(f"泳道图智能设计工具 - AI 代理服务器已启动")
     print(f"=" * 60)
     print(f"监听地址: http://localhost:{port}")
-    print(f"API端点: http://localhost:{port}/api/convert")
-    print(f"健康检查: http://localhost:{port}/api/health")
-    print(f"目标 API: {API_URL}")
-    print(f"模型: {MODEL}")
+    print(f"前端页面: http://localhost:{port}/index.html")
+    print(f"配置接口: http://localhost:{port}/api/config")
+    print(f"当前 Provider: {provider_name} ({provider})")
+    print(f"当前 Model: {model}")
+    print(f"API Key: {'已配置' if api_key else '未配置（请在前端右上角设置）'}")
     print(f"=" * 60)
     print(f"按 Ctrl+C 停止服务器")
     print(f"=" * 60)
