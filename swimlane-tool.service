@@ -1,0 +1,17 @@
+[Unit]
+Description=Swimlane Diagram Tool
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/swimlane-tool
+Environment=PYTHONIOENCODING=utf-8
+EnvironmentFile=-/opt/swimlane-tool/.env
+ExecStart=/usr/bin/python3 /opt/swimlane-tool/proxy_server.py 8222
+Restart=always
+RestartSec=3
+StandardOutput=append:/opt/swimlane-tool/backend.log
+StandardError=append:/opt/swimlane-tool/backend.log
+
+[Install]
+WantedBy=multi-user.target
