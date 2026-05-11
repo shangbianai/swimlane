@@ -1,67 +1,83 @@
 #!/bin/bash
-# 在服务器上安全启动服务的脚本（不影响其他服务）
+# 在服务器上安全启动所有服务的脚本
 
 PROJECT_DIR="/opt/swimlane-tool"
-PORT=8222
+MAIN_PORT=8222      # 主服务（泳道图工具）
+ADMIN_PORT=6010     # 认证 & 管理后台
 
-cd $PROJECT_DIR
+cd "$PROJECT_DIR"
 
-# 检查端口是否被占用
 check_port() {
     local port=$1
-    local service_name=$2
-    
+    local name=$2
     if netstat -tlnp 2>/dev/null | grep -q ":$port " || ss -tlnp 2>/dev/null | grep -q ":$port "; then
-        echo "⚠️  警告: 端口 $port ($service_name) 已被占用！"
-        echo "占用该端口的进程:"
-        netstat -tlnp 2>/dev/null | grep ":$port " || ss -tlnp 2>/dev/null | grep ":$port "
-        echo ""
-        read -p "是否继续启动服务？(y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "已取消启动"
-            exit 1
-        fi
+        echo "⚠️  端口 $port ($name) 已被占用，尝试终止旧进程..."
+        fuser -k "$port/tcp" 2>/dev/null || true
+        sleep 1
     fi
 }
 
-# 检查端口
-check_port $PORT "泳道图服务"
+# ──────────────────────────────────────────
+# 1. 安装依赖
+# ──────────────────────────────────────────
+echo "检查 Python 依赖..."
+pip3 install -q -r requirements.txt 2>/dev/null || true
 
-# 停止可能存在的旧进程（仅停止本项目的进程）
-echo "检查并停止旧进程..."
-pkill -f "python3.*proxy_server.py" 2>/dev/null && echo "已停止旧的服务进程" || echo "没有运行中的服务进程"
+# ──────────────────────────────────────────
+# 2. 停止旧进程
+# ──────────────────────────────────────────
+echo "停止旧进程..."
+pkill -f "python3.*proxy_server.py"      2>/dev/null || true
+pkill -f "python3.*auth_admin_server.py" 2>/dev/null || true
+sleep 1
+
+# ──────────────────────────────────────────
+# 3. 启动主服务（泳道图工具 + AI API）
+# ──────────────────────────────────────────
+check_port $MAIN_PORT "泳道图主服务"
+echo "启动主服务（端口 $MAIN_PORT）..."
+PYTHONIOENCODING=utf-8 nohup python3 proxy_server.py $MAIN_PORT > backend.log 2>&1 &
+echo $! > backend.pid
+echo "  主服务 PID: $(cat backend.pid)"
+
+# ──────────────────────────────────────────
+# 4. 启动认证 & 管理后台（端口 6010）
+# ──────────────────────────────────────────
+check_port $ADMIN_PORT "认证/管理后台"
+echo "启动认证/管理后台（端口 $ADMIN_PORT）..."
+PYTHONIOENCODING=utf-8 nohup python3 auth_admin_server.py $ADMIN_PORT > admin.log 2>&1 &
+echo $! > admin.pid
+echo "  后台服务 PID: $(cat admin.pid)"
+
 sleep 2
 
-# 启动单端口服务（前端页面 + API）
-echo "启动泳道图服务（端口 $PORT）..."
-cd "$PROJECT_DIR"
-PYTHONIOENCODING=utf-8 nohup python3 proxy_server.py $PORT > backend.log 2>&1 &
-SERVICE_PID=$!
-echo $SERVICE_PID > backend.pid
-echo "服务PID: $SERVICE_PID"
-
-sleep 2
-
-# 验证服务是否启动成功
+# ──────────────────────────────────────────
+# 5. 验证
+# ──────────────────────────────────────────
 echo ""
 echo "验证服务状态..."
-if netstat -tlnp 2>/dev/null | grep -q ":$PORT " || ss -tlnp 2>/dev/null | grep -q ":$PORT "; then
-    echo "✅ 泳道图服务启动成功（端口 $PORT）"
-else
-    echo "❌ 泳道图服务启动失败，请查看日志: tail -f $PROJECT_DIR/backend.log"
-fi
+for port_info in "$MAIN_PORT:泳道图主服务" "$ADMIN_PORT:认证/管理后台"; do
+    port="${port_info%%:*}"
+    name="${port_info##*:}"
+    if netstat -tlnp 2>/dev/null | grep -q ":$port " || ss -tlnp 2>/dev/null | grep -q ":$port "; then
+        echo "  ✅ $name（端口 $port）启动成功"
+    else
+        echo "  ❌ $name（端口 $port）启动失败，请查看日志"
+    fi
+done
+
+SERVER_IP=$(curl -s --max-time 3 ifconfig.me 2>/dev/null || echo "182.92.97.169")
 
 echo ""
 echo "=========================================="
-echo "服务启动完成"
+echo "  服务已启动"
 echo "=========================================="
-echo "访问地址: http://182.92.97.169:$PORT/index.html"
-echo "API地址: http://182.92.97.169:$PORT/api/convert"
-echo "健康检查: http://182.92.97.169:$PORT/api/health"
+echo "  泳道图工具: http://$SERVER_IP:$MAIN_PORT/"
+echo "  管理后台:   http://$SERVER_IP:$ADMIN_PORT/admin"
 echo ""
-echo "管理命令:"
-echo "  查看进程: ps aux | grep proxy_server"
-echo "  查看日志: tail -f $PROJECT_DIR/backend.log"
-echo "  停止服务: kill \$(cat $PROJECT_DIR/backend.pid)"
+echo "  管理命令:"
+echo "    主服务日志:  tail -f $PROJECT_DIR/backend.log"
+echo "    后台日志:    tail -f $PROJECT_DIR/admin.log"
+echo "    停止所有:    pkill -f proxy_server.py; pkill -f auth_admin_server.py"
+echo "=========================================="
 

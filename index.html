@@ -1059,6 +1059,96 @@
             .card-toolbar { flex-direction: column; align-items: flex-start; }
             .toolbar-actions { width: 100%; }
         }
+
+        /* ===== Auth UI ===== */
+        .auth-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            color: var(--text-2);
+            transition: all 0.15s var(--ease);
+        }
+        .auth-btn:hover { background: var(--bg-2); color: var(--text-1); border-color: rgba(255,255,255,.2); }
+        .auth-btn svg { width: 14px; height: 14px; }
+
+        .user-chip {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 5px 10px 5px 6px;
+            border: 1px solid var(--border-strong);
+            border-radius: 999px;
+            font-size: 12.5px; color: var(--text-2);
+            cursor: default;
+        }
+        .user-chip .avatar {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand) 0%, #5B8DEF 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; color: #fff;
+            flex-shrink: 0;
+        }
+        .user-chip .logout-link {
+            margin-left: 4px; font-size: 11.5px; color: var(--text-3);
+            cursor: pointer; text-decoration: underline;
+            transition: color 0.15s;
+        }
+        .user-chip .logout-link:hover { color: var(--error); }
+
+        /* Auth modal overlay */
+        #authModal {
+            position: fixed; inset: 0; z-index: 9500;
+            display: none; align-items: center; justify-content: center;
+            padding: 24px;
+            background: rgba(11,13,18,.82);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        #authModal.open { display: flex; animation: modalIn 0.22s var(--ease); }
+        .auth-card {
+            width: 100%; max-width: 420px;
+            background: var(--bg-1);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-lg);
+            padding: 36px 32px;
+            box-shadow: 0 32px 80px rgba(0,0,0,.55);
+            animation: modalCardIn 0.28s var(--ease);
+        }
+        .auth-logo { text-align: center; margin-bottom: 24px; }
+        .auth-logo .mark {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--brand) 0%, #5B8DEF 100%);
+            box-shadow: 0 6px 20px rgba(124,92,255,.4); margin-bottom: 10px;
+        }
+        .auth-logo h2 { font-size: 18px; font-weight: 700; }
+        .auth-logo p  { color: var(--text-3); font-size: 13px; margin-top: 4px; }
+        .auth-form-row { margin-bottom: 14px; }
+        .auth-form-row label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: var(--text-2); margin-bottom: 7px; letter-spacing: .02em;
+        }
+        .auth-input-group { display: flex; gap: 8px; }
+        .auth-input-group .field { flex: 1; min-height: auto; resize: none;
+                                   padding: 11px 13px; font-size: 14px; }
+        .auth-send-btn {
+            padding: 0 14px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border-strong);
+            background: var(--bg-2); color: var(--text-2);
+            font-size: 12.5px; font-weight: 500; white-space: nowrap;
+            transition: all 0.15s var(--ease); flex-shrink: 0;
+        }
+        .auth-send-btn:hover:not(:disabled) { background: var(--bg-1); color: var(--text-1); }
+        .auth-send-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .auth-close {
+            position: absolute; top: 14px; right: 14px;
+            width: 28px; height: 28px; border-radius: 7px;
+            color: var(--text-3); display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s; cursor: pointer;
+        }
+        .auth-close:hover { background: var(--bg-2); color: var(--text-1); }
+        .auth-card { position: relative; }
+        .auth-err  { color: var(--error); font-size: 12.5px; margin-top: 8px; display: none; }
+        .auth-hint { color: var(--text-3); font-size: 12px; margin-top: 10px; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -1105,6 +1195,18 @@
                 </div>
             </div>
             <div class="header-right">
+                <!-- Auth state -->
+                <div id="authArea">
+                    <button class="auth-btn" id="loginBtn" onclick="openAuthModal()" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        登录
+                    </button>
+                    <div class="user-chip" id="userChip" style="display:none">
+                        <div class="avatar" id="userAvatar">U</div>
+                        <span id="userNickname"></span>
+                        <span class="logout-link" onclick="authLogout()">退出</span>
+                    </div>
+                </div>
                 <span class="health-dot" id="healthDot" title="点击查看/修改模型配置">服务运行中</span>
                 <button class="icon-btn" id="settingsBtn" title="模型与 API Key 设置" type="button">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1386,6 +1488,48 @@
                 </div>
             </div>
             <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <div class="auth-card">
+            <button class="auth-close" onclick="closeAuthModal()" aria-label="关闭" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="auth-logo">
+                <div class="mark">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+                </div>
+                <h2 id="authModalTitle">登录 / 注册</h2>
+                <p>使用邮箱验证码免密登录，首次登录自动注册</p>
+            </div>
+
+            <div class="auth-form-row">
+                <label>邮箱地址</label>
+                <div class="auth-input-group">
+                    <input id="authEmail" class="field" type="email" placeholder="请输入您的邮箱" autocomplete="email" spellcheck="false">
+                    <button class="auth-send-btn" id="authSendBtn" onclick="authSendCode()" type="button">发送验证码</button>
+                </div>
+            </div>
+
+            <div class="auth-form-row" id="authCodeRow" style="display:none">
+                <label>验证码 <span style="color:var(--text-3);font-weight:400">（已发送至邮箱）</span></label>
+                <input id="authCode" class="field" type="text" placeholder="请输入 6 位验证码"
+                       maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                       style="min-height:auto;padding:11px 13px;font-size:16px;letter-spacing:4px;">
+            </div>
+
+            <div id="authErr" class="auth-err"></div>
+
+            <div style="margin-top:18px">
+                <button class="btn btn-primary" id="authSubmitBtn" onclick="authVerifyCode()" type="button"
+                        style="width:100%;padding:12px;" disabled>
+                    登录 / 注册
+                </button>
+            </div>
+
+            <p class="auth-hint">验证码 10 分钟内有效 · 登录即代表同意服务条款</p>
         </div>
     </div>
 
@@ -2664,7 +2808,223 @@
                 toast.info('请先配置模型 API Key', '点击右上角齿轮按钮，或确认下方面板', { duration: 6000 });
                 openSettings();
             }
+            // 初始化认证状态 + PV 埋点
+            await authInit();
+            trackPV();
         });
+
+        /* ========== Auth & PV Tracking ========== */
+        // 认证后台地址（与主服务同机器，端口 6010）
+        const AUTH_API = window.location.protocol + '//' + window.location.hostname + ':6010';
+        const AUTH_CHANNEL = 'AI泳道图';
+
+        let _authUser   = null;          // 当前登录用户
+        let _authToken  = null;          // session token
+        let _sendTimer  = null;          // 验证码倒计时
+
+        /* ── PV 埋点 ── */
+        function trackPV() {
+            try {
+                let sid = localStorage.getItem('_swimlane_sid');
+                if (!sid) {
+                    sid = 'sid_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+                    localStorage.setItem('_swimlane_sid', sid);
+                }
+                const headers = { 'Content-Type': 'application/json' };
+                if (_authToken) headers['Authorization'] = 'Bearer ' + _authToken;
+                fetch(AUTH_API + '/api/track/pv', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        session_id: sid,
+                        page_path:  window.location.pathname || '/',
+                        channel:    AUTH_CHANNEL,
+                    })
+                }).catch(() => {});
+            } catch (e) {}
+        }
+
+        /* ── 初始化：读取缓存 token，校验 session ── */
+        async function authInit() {
+            try {
+                _authToken = localStorage.getItem('_swimlane_token') || null;
+                if (!_authToken) return;
+                const r = await fetch(AUTH_API + '/api/auth/me', {
+                    headers: { 'Authorization': 'Bearer ' + _authToken }
+                });
+                if (r.ok) {
+                    const j = await r.json();
+                    if (j.success && j.user) { _authUser = j.user; renderAuthState(); return; }
+                }
+                // token 失效则清除
+                _authToken = null;
+                localStorage.removeItem('_swimlane_token');
+            } catch (e) {}
+        }
+
+        /* ── 渲染登录状态 ── */
+        function renderAuthState() {
+            const loginBtn  = document.getElementById('loginBtn');
+            const userChip  = document.getElementById('userChip');
+            const nickname  = document.getElementById('userNickname');
+            const avatar    = document.getElementById('userAvatar');
+            if (_authUser) {
+                if (loginBtn)  loginBtn.style.display  = 'none';
+                if (userChip)  userChip.style.display  = '';
+                if (nickname)  nickname.textContent = _authUser.nickname || _authUser.email.split('@')[0];
+                if (avatar)    avatar.textContent   = (_authUser.nickname || _authUser.email)[0].toUpperCase();
+            } else {
+                if (loginBtn)  loginBtn.style.display  = '';
+                if (userChip)  userChip.style.display  = 'none';
+            }
+        }
+
+        /* ── 打开/关闭 Auth Modal ── */
+        function openAuthModal() {
+            const m = document.getElementById('authModal');
+            if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
+            // 重置表单
+            const emailEl = document.getElementById('authEmail');
+            const codeEl  = document.getElementById('authCode');
+            const codeRow = document.getElementById('authCodeRow');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            if (emailEl)  emailEl.value = '';
+            if (codeEl)   codeEl.value  = '';
+            if (codeRow)  codeRow.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = true;
+            clearAuthErr();
+            stopSendTimer();
+            const sendBtn = document.getElementById('authSendBtn');
+            if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '发送验证码'; }
+        }
+        function closeAuthModal() {
+            const m = document.getElementById('authModal');
+            if (m) { m.classList.remove('open'); document.body.style.overflow = ''; }
+            stopSendTimer();
+        }
+        document.getElementById('authModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAuthModal();
+        });
+
+        /* ── 发送验证码 ── */
+        async function authSendCode() {
+            const email   = (document.getElementById('authEmail').value || '').trim();
+            const sendBtn = document.getElementById('authSendBtn');
+            clearAuthErr();
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                return showAuthErr('请输入正确的邮箱地址');
+            }
+            sendBtn.disabled = true;
+            sendBtn.textContent = '发送中...';
+            try {
+                const r = await fetch(AUTH_API + '/api/auth/send-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const j = await r.json();
+                if (!r.ok || !j.success) throw new Error(j.error || '发送失败');
+
+                // 显示验证码输入框
+                document.getElementById('authCodeRow').style.display = '';
+                document.getElementById('authSubmitBtn').disabled = false;
+                document.getElementById('authCode').focus();
+                toast.success('验证码已发送', '请查收邮件，注意检查垃圾箱');
+                startSendTimer(60);
+            } catch (e) {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '重新发送';
+                showAuthErr(e.message || '发送失败，请稍后重试');
+            }
+        }
+
+        /* ── 验证码倒计时 ── */
+        function startSendTimer(seconds) {
+            stopSendTimer();
+            const btn = document.getElementById('authSendBtn');
+            let left = seconds;
+            btn.disabled = true;
+            btn.textContent = `${left}s 后重发`;
+            _sendTimer = setInterval(() => {
+                left--;
+                if (left <= 0) {
+                    stopSendTimer();
+                    btn.disabled = false;
+                    btn.textContent = '重新发送';
+                } else {
+                    btn.textContent = `${left}s 后重发`;
+                }
+            }, 1000);
+        }
+        function stopSendTimer() {
+            if (_sendTimer) { clearInterval(_sendTimer); _sendTimer = null; }
+        }
+
+        /* ── 验证并登录 ── */
+        async function authVerifyCode() {
+            const email     = (document.getElementById('authEmail').value || '').trim();
+            const code      = (document.getElementById('authCode').value  || '').trim();
+            const submitBtn = document.getElementById('authSubmitBtn');
+            clearAuthErr();
+            if (!code) return showAuthErr('请输入验证码');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-sm"></span>&nbsp;验证中...';
+            try {
+                const r = await fetch(AUTH_API + '/api/auth/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code, channel: AUTH_CHANNEL })
+                });
+                const j = await r.json();
+                if (!r.ok || !j.success) throw new Error(j.error || '验证失败');
+                _authToken = j.token;
+                _authUser  = j.user;
+                localStorage.setItem('_swimlane_token', _authToken);
+                renderAuthState();
+                closeAuthModal();
+                toast.success('登录成功', `欢迎回来，${_authUser.nickname || _authUser.email.split('@')[0]}！`);
+                trackPV(); // 补一次带用户 ID 的埋点
+            } catch (e) {
+                showAuthErr(e.message || '验证失败，请重新尝试');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '登录 / 注册';
+            }
+        }
+
+        /* ── 退出登录 ── */
+        async function authLogout() {
+            try {
+                if (_authToken) {
+                    fetch(AUTH_API + '/api/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + _authToken }
+                    }).catch(() => {});
+                }
+            } finally {
+                _authToken = null;
+                _authUser  = null;
+                localStorage.removeItem('_swimlane_token');
+                renderAuthState();
+                toast.info('已退出登录');
+            }
+        }
+
+        /* ── 键盘快捷键 ── */
+        document.getElementById('authCode').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') authVerifyCode();
+        });
+        document.getElementById('authEmail').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') authSendCode();
+        });
+
+        function showAuthErr(msg) {
+            const el = document.getElementById('authErr');
+            if (el) { el.textContent = msg; el.style.display = 'block'; }
+        }
+        function clearAuthErr() {
+            const el = document.getElementById('authErr');
+            if (el) { el.textContent = ''; el.style.display = 'none'; }
+        }
     </script>
 </body>
 </html>
