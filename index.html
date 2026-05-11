@@ -2814,8 +2814,8 @@
         });
 
         /* ========== Auth & PV Tracking ========== */
-        // 认证后台地址（与主服务同机器，端口 6010）
-        const AUTH_API = window.location.protocol + '//' + window.location.hostname + ':6010';
+        // 认证后台地址（通过 nginx 反代，与主服务同域）
+        const AUTH_API = '';
         const AUTH_CHANNEL = 'AI泳道图';
 
         let _authUser   = null;          // 当前登录用户
